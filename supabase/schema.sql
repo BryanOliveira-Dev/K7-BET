@@ -35,7 +35,7 @@ create index if not exists games_kickoff_idx on games(kickoff_at);
 -- Palpites
 create table if not exists bets (
   id                   uuid primary key default gen_random_uuid(),
-  user_id              uuid not null references users(id),
+  user_id              uuid not null references users(id) on delete cascade,
   game_id              uuid not null references games(id),
   predicted_result     text not null check (predicted_result in ('home','draw','away')),
   predicted_home_score int,
