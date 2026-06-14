@@ -47,7 +47,11 @@ export default function JogosPage() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { fetchGames() }, [fetchGames])
+  useEffect(() => {
+    fetchGames()
+    const interval = setInterval(fetchGames, 30_000)
+    return () => clearInterval(interval)
+  }, [fetchGames])
 
   const upcoming = games.filter(g => g.status !== 'finished')
   const finished = games.filter(g => g.status === 'finished').reverse()
