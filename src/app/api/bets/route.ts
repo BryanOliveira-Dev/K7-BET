@@ -12,6 +12,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'gameId e predicted_result são obrigatórios' }, { status: 400 })
   }
 
+  // Valida consistência entre placar e resultado escolhido (campos em branco chegam como 0)
+  const h = predicted_home_score ?? 0
+  const a = predicted_away_score ?? 0
+  if (predicted_home_score !== null || predicted_away_score !== null) {
+    const invalid =
+      (predicted_result === 'home' && h <= a) ||
+      (predicted_result === 'draw' && h !== a) ||
+      (predicted_result === 'away' && a <= h)
+    if (invalid) {
+      return NextResponse.json({ error: 'O placar informado não condiz com o resultado escolhido.' }, { status: 400 })
+    }
+  }
+
   const supabase = createServerClient()
 
   // Verificar se o jogo ainda aceita palpites (10min antes do kickoff)
@@ -33,8 +46,8 @@ export async function POST(req: NextRequest) {
       user_id: session.userId,
       game_id: gameId,
       predicted_result,
-      predicted_home_score: predicted_home_score ?? null,
-      predicted_away_score: predicted_away_score ?? null,
+      predicted_home_score: predicted_home_score ?? 0,
+      predicted_away_score: predicted_away_score ?? 0,
     },
     { onConflict: 'user_id,game_id' }
   )
