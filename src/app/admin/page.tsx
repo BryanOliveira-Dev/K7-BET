@@ -12,6 +12,7 @@ export default function AdminPage() {
   const [importing, setImporting] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [fixing, setFixing] = useState(false)
+  const [fixingScores, setFixingScores] = useState(false)
   const [message, setMessage] = useState('')
   const [selectedGame, setSelectedGame] = useState<string>('')
   const [odds, setOdds] = useState({ home: '', draw: '', away: '' })
@@ -35,6 +36,19 @@ export default function AdminPage() {
     setMessage(res.ok ? `${data.imported} jogos importados` : `Erro: ${data.error}`)
     setImporting(false)
     fetchGames()
+  }
+
+  async function handleFixNullScores() {
+    setFixingScores(true)
+    setMessage('')
+    const res = await fetch('/api/admin/fix-null-scores', { method: 'POST' })
+    const data = await res.json()
+    if (res.ok) {
+      setMessage(`Placares null corrigidos: ${data.null_scores_fixed}. Pontos recalculados: ${data.points_recalculated} (${data.finished_games} jogos finalizados).`)
+    } else {
+      setMessage(`Erro: ${data.error}`)
+    }
+    setFixingScores(false)
   }
 
   async function handleFixOrphanBets() {
@@ -157,6 +171,13 @@ export default function AdminPage() {
               className="bg-amber-600 text-slate-100 rounded-xl px-4 py-2 text-sm hover:bg-amber-500 disabled:opacity-40 transition-colors cursor-pointer"
             >
               {fixing ? 'Corrigindo...' : 'Corrigir Apostas Órfãs'}
+            </button>
+            <button
+              onClick={handleFixNullScores}
+              disabled={fixingScores}
+              className="bg-violet-700 text-slate-100 rounded-xl px-4 py-2 text-sm hover:bg-violet-600 disabled:opacity-40 transition-colors cursor-pointer"
+            >
+              {fixingScores ? 'Corrigindo...' : 'Corrigir Placares Nulos'}
             </button>
           </div>
         </section>
