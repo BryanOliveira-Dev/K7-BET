@@ -47,18 +47,19 @@ export async function POST(req: NextRequest) {
 
   // Calcular e atualizar pontos de cada palpite
   const gameWithResult: Game = { ...game, home_score, away_score }
-  const updates = bets.map((bet: Bet) => ({
-    id: bet.id,
-    points_earned: calculatePoints(bet, gameWithResult),
-  }))
+  let updatedCount = 0
 
-  const { error: updateError } = await supabase
-    .from('bets')
-    .upsert(updates, { onConflict: 'id' })
+  for (const bet of bets as Bet[]) {
+    const { error: updateError } = await supabase
+      .from('bets')
+      .update({ points_earned: calculatePoints(bet, gameWithResult) })
+      .eq('id', bet.id)
 
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 })
+    if (updateError) {
+      return NextResponse.json({ error: updateError.message }, { status: 500 })
+    }
+    updatedCount++
   }
 
-  return NextResponse.json({ ok: true, updated: updates.length })
+  return NextResponse.json({ ok: true, updated: updatedCount })
 }
