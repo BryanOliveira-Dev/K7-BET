@@ -284,40 +284,45 @@ export default function AdminPage() {
               )}
             </section>
 
-            {game?.status !== 'finished' && (
-              <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-                <h2 className="font-semibold text-slate-100 text-sm mb-3">Inserir Resultado</h2>
-                <div className="flex items-end gap-3">
-                  <div>
-                    <label className="text-xs text-slate-500 block mb-1.5">{game?.home_team}</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={result.home}
-                      onChange={e => setResult(r => ({ ...r, home: e.target.value }))}
-                      className="w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-slate-100 text-center text-sm focus:outline-none focus:border-emerald-500 transition-colors tabular-nums"
-                    />
-                  </div>
-                  <span className="text-slate-600 mb-2 text-sm">×</span>
-                  <div>
-                    <label className="text-xs text-slate-500 block mb-1.5">{game?.away_team}</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={result.away}
-                      onChange={e => setResult(r => ({ ...r, away: e.target.value }))}
-                      className="w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-slate-100 text-center text-sm focus:outline-none focus:border-emerald-500 transition-colors tabular-nums"
-                    />
-                  </div>
-                  <button
-                    onClick={handleSaveResult}
-                    className="bg-red-600 text-white rounded-xl px-4 py-2 text-sm font-semibold hover:bg-red-500 transition-colors cursor-pointer"
-                  >
-                    Finalizar Jogo
-                  </button>
+            <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+              <h2 className="font-semibold text-slate-100 text-sm mb-1">
+                {game?.status === 'finished' ? 'Corrigir Resultado' : 'Inserir Resultado'}
+              </h2>
+              {game?.status === 'finished' && (
+                <p className="text-xs text-amber-400 mb-3">
+                  Placar atual: {game.home_score ?? '?'} × {game.away_score ?? '?'} — preencha abaixo para corrigir.
+                </p>
+              )}
+              <div className="flex items-end gap-3">
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1.5">{game?.home_team}</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={result.home}
+                    onChange={e => setResult(r => ({ ...r, home: e.target.value }))}
+                    className="w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-slate-100 text-center text-sm focus:outline-none focus:border-emerald-500 transition-colors tabular-nums"
+                  />
                 </div>
-              </section>
-            )}
+                <span className="text-slate-600 mb-2 text-sm">×</span>
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1.5">{game?.away_team}</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={result.away}
+                    onChange={e => setResult(r => ({ ...r, away: e.target.value }))}
+                    className="w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-slate-100 text-center text-sm focus:outline-none focus:border-emerald-500 transition-colors tabular-nums"
+                  />
+                </div>
+                <button
+                  onClick={handleSaveResult}
+                  className={`text-white rounded-xl px-4 py-2 text-sm font-semibold transition-colors cursor-pointer ${game?.status === 'finished' ? 'bg-amber-600 hover:bg-amber-500' : 'bg-red-600 hover:bg-red-500'}`}
+                >
+                  {game?.status === 'finished' ? 'Corrigir Placar' : 'Finalizar Jogo'}
+                </button>
+              </div>
+            </section>
           </>
         )}
       </div>
