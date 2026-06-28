@@ -14,6 +14,8 @@ export default function AdminPage() {
   const [fixing, setFixing] = useState(false)
   const [fixingScores, setFixingScores] = useState(false)
   const [message, setMessage] = useState('')
+  const [tournamentResult, setTournamentResult] = useState({ champion: '', runner_up: '', top_scorer: '' })
+  const [savingTournament, setSavingTournament] = useState(false)
   const [selectedGame, setSelectedGame] = useState<string>('')
   const [odds, setOdds] = useState({ home: '', draw: '', away: '' })
   const [result, setResult] = useState({ home: '', away: '' })
@@ -106,6 +108,19 @@ export default function AdminPage() {
     if (res.ok) setLineup(data)
     else setLineupError(data.error ?? 'Erro ao buscar escalação')
     setLoadingLineup(false)
+  }
+
+  async function handleSaveTournamentResult() {
+    setSavingTournament(true)
+    setMessage('')
+    const res = await fetch('/api/admin/tournament-results', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tournamentResult),
+    })
+    const data = await res.json()
+    setMessage(res.ok ? `Resultado do torneio salvo. ${data.updated} palpites pontuados.` : `Erro: ${data.error}`)
+    setSavingTournament(false)
   }
 
   async function handleSaveResult() {
@@ -325,6 +340,35 @@ export default function AdminPage() {
             </section>
           </>
         )}
+        <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <h2 className="font-semibold text-slate-100 text-sm mb-1">Resultado do Torneio</h2>
+          <p className="text-xs text-slate-500 mb-4">Define campeão, vice e artilheiro — pontos são calculados automaticamente.</p>
+          <div className="space-y-3">
+            {([
+              { key: 'champion' as const, label: 'Campeão' },
+              { key: 'runner_up' as const, label: 'Vice-campeão' },
+              { key: 'top_scorer' as const, label: 'Artilheiro' },
+            ]).map(({ key, label }) => (
+              <div key={key}>
+                <label className="text-xs text-slate-500 block mb-1.5">{label}</label>
+                <input
+                  type="text"
+                  value={tournamentResult[key]}
+                  onChange={e => setTournamentResult(r => ({ ...r, [key]: e.target.value }))}
+                  placeholder={`Nome do ${label.toLowerCase()}`}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={handleSaveTournamentResult}
+            disabled={savingTournament}
+            className="mt-4 bg-purple-700 text-slate-100 rounded-xl px-4 py-2 text-sm hover:bg-purple-600 disabled:opacity-40 transition-colors cursor-pointer"
+          >
+            {savingTournament ? 'Salvando...' : 'Salvar Resultado do Torneio'}
+          </button>
+        </section>
       </div>
       </div>
     </main>

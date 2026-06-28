@@ -1,4 +1,12 @@
-import type { BetResult } from './types'
+import type { BetResult, GamePhase } from './types'
+
+const PHASE_MULTIPLIER: Record<GamePhase, number> = {
+  group: 1,
+  r16: 2,
+  qf: 3,
+  sf: 4,
+  final: 5,
+}
 
 interface GameScores {
   home_score: number | null
@@ -6,6 +14,7 @@ interface GameScores {
   home_odds: number | null
   away_odds: number | null
   draw_odds: number | null
+  phase?: GamePhase
 }
 
 interface BetInput {
@@ -44,5 +53,6 @@ export function calculatePoints(bet: BetInput, game: GameScores): number {
   else if (bet.predicted_result === 'away') bonus = getOddsBonus(game.away_odds)
   else if (bet.predicted_result === 'draw') bonus = getOddsBonus(game.draw_odds)
 
-  return basePoints + bonus
+  const multiplier = PHASE_MULTIPLIER[game.phase ?? 'group'] ?? 1
+  return (basePoints + bonus) * multiplier
 }

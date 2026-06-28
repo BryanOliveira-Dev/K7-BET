@@ -19,6 +19,13 @@ const PHASE_LABELS: Record<string, string> = {
   final: 'Final',
 }
 
+const PHASE_MULTIPLIER: Record<string, number> = {
+  r16: 2,
+  qf: 3,
+  sf: 4,
+  final: 5,
+}
+
 const RESULT_LABELS: Record<string, string> = {
   home: 'Casa',
   draw: 'Empate',
@@ -42,8 +49,11 @@ export default function GameCard({ game, otherBets, onBetSaved }: Props) {
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 hover:border-slate-700 transition-colors">
       <div className="flex items-center justify-between text-xs text-slate-500 mb-4">
-        <span className="font-medium">
+        <span className="font-medium flex items-center gap-1.5">
           {PHASE_LABELS[game.phase]}{game.group_name ? ` · Grupo ${game.group_name}` : ''}
+          {PHASE_MULTIPLIER[game.phase] && (
+            <span className="text-amber-400 font-bold">×{PHASE_MULTIPLIER[game.phase]}</span>
+          )}
         </span>
         <div className="flex items-center gap-2">
           {isLive && (

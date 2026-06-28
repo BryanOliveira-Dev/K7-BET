@@ -24,7 +24,7 @@ export async function POST() {
   // Recalcula pontos de todos os jogos finalizados
   const { data: finishedGames, error: gamesErr } = await supabase
     .from('games')
-    .select('id, home_score, away_score, home_odds, away_odds, draw_odds')
+    .select('id, home_score, away_score, home_odds, away_odds, draw_odds, phase')
     .eq('status', 'finished')
     .not('home_score', 'is', null)
 

@@ -5,7 +5,15 @@ import GameCard from '@/components/GameCard'
 import type { Game, Bet, OtherBet } from '@/lib/types'
 
 type GameWithBet = Game & { my_bet: Bet | null; bets_open: boolean; other_bets: OtherBet[] }
-type Tab = 'proximos' | 'encerrados'
+type Tab = 'proximos' | 'matamata' | 'encerrados'
+
+const PHASE_ORDER = ['r16', 'qf', 'sf', 'final']
+const PHASE_LABELS_LONG: Record<string, string> = {
+  r16: 'Oitavas de Final',
+  qf: 'Quartas de Final',
+  sf: 'Semifinais',
+  final: 'Final',
+}
 
 function formatDayLabel(dateStr: string): string {
   const date = new Date(dateStr)
@@ -36,6 +44,17 @@ function groupByDay(games: GameWithBet[]): { dayKey: string; label: string; game
   }))
 }
 
+function groupByPhase(games: GameWithBet[]): { phase: string; label: string; games: GameWithBet[] }[] {
+  const map = new Map<string, GameWithBet[]>()
+  for (const game of games) {
+    if (!map.has(game.phase)) map.set(game.phase, [])
+    map.get(game.phase)!.push(game)
+  }
+  return PHASE_ORDER
+    .filter(phase => map.has(phase))
+    .map(phase => ({ phase, label: PHASE_LABELS_LONG[phase], games: map.get(phase)! }))
+}
+
 export default function JogosPage() {
   const [games, setGames] = useState<GameWithBet[]>([])
   const [loading, setLoading] = useState(true)
@@ -53,13 +72,16 @@ export default function JogosPage() {
     return () => clearInterval(interval)
   }, [fetchGames])
 
-  const upcoming = games.filter(g => g.status !== 'finished')
+  const upcoming = games.filter(g => g.status !== 'finished' && g.phase === 'group')
   const finished = games.filter(g => g.status === 'finished').reverse()
+  const knockout = games.filter(g => g.phase !== 'group')
 
   const upcomingByDay = groupByDay(upcoming)
   const finishedByDay = groupByDay(finished)
+  const knockoutByPhase = groupByPhase(knockout)
 
   const finishedCount = finished.length
+  const knockoutCount = knockout.length
 
   return (
     <main className="min-h-screen text-slate-100 relative" style={{backgroundImage: 'url(/bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed'}}>
@@ -69,8 +91,10 @@ export default function JogosPage() {
           <span className="font-bold text-slate-100 tracking-tight">
             K7 <span className="text-emerald-400">BET</span>
           </span>
-          <div className="flex gap-6 text-sm">
+          <div className="flex gap-4 text-sm">
             <a href="/jogos" className="text-slate-100 font-medium cursor-pointer">Jogos</a>
+            <a href="/chaveamento" className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Chaveamento</a>
+            <a href="/torneio" className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Torneio</a>
             <a href="/ranking" className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Ranking</a>
           </div>
         </nav>
@@ -86,7 +110,22 @@ export default function JogosPage() {
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              Próximos Jogos
+              Grupos
+            </button>
+            <button
+              onClick={() => setActiveTab('matamata')}
+              className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+                activeTab === 'matamata'
+                  ? 'border-emerald-400 text-emerald-400'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Mata-Mata
+              {knockoutCount > 0 && (
+                <span className="bg-slate-700 text-slate-300 text-xs px-1.5 py-0.5 rounded-full">
+                  {knockoutCount}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setActiveTab('encerrados')}
@@ -111,7 +150,7 @@ export default function JogosPage() {
             <div className="text-slate-500 text-center py-16 text-sm">Carregando jogos...</div>
           ) : activeTab === 'proximos' ? (
             upcomingByDay.length === 0 ? (
-              <div className="text-slate-500 text-center py-16 text-sm">Nenhum jogo próximo.</div>
+              <div className="text-slate-500 text-center py-16 text-sm">Nenhum jogo de grupos próximo.</div>
             ) : (
               upcomingByDay.map(({ dayKey, label, games: dayGames }) => (
                 <section key={dayKey} className="mb-10">
@@ -120,6 +159,23 @@ export default function JogosPage() {
                   </h2>
                   <div className="space-y-3">
                     {dayGames.map(game => (
+                      <GameCard key={game.id} game={game} otherBets={game.other_bets ?? []} onBetSaved={fetchGames} />
+                    ))}
+                  </div>
+                </section>
+              ))
+            )
+          ) : activeTab === 'matamata' ? (
+            knockoutByPhase.length === 0 ? (
+              <div className="text-slate-500 text-center py-16 text-sm">Nenhum jogo de mata-mata disponível ainda.</div>
+            ) : (
+              knockoutByPhase.map(({ phase, label, games: phaseGames }) => (
+                <section key={phase} className="mb-10">
+                  <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 px-0.5">
+                    {label}
+                  </h2>
+                  <div className="space-y-3">
+                    {phaseGames.map(game => (
                       <GameCard key={game.id} game={game} otherBets={game.other_bets ?? []} onBetSaved={fetchGames} />
                     ))}
                   </div>

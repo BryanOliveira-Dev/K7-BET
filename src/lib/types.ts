@@ -64,3 +64,23 @@ export interface Session {
   name: string
   isAdmin: boolean
 }
+
+export interface TournamentPrediction {
+  id: string
+  user_id: string
+  champion: string | null
+  runner_up: string | null
+  top_scorer: string | null
+  champion_points: number
+  runner_up_points: number
+  top_scorer_points: number
+  created_at: string
+}
+
+export interface TournamentResult {
+  id: string
+  champion: string | null
+  runner_up: string | null
+  top_scorer: string | null
+  set_at: string
+}

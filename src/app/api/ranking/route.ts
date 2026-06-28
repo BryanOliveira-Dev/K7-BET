@@ -81,6 +81,22 @@ export async function GET() {
     if ((row.points_earned ?? 0) > 0) grouped[row.user_id].correct++
   }
 
+  // Adiciona pontos de palpites de torneio
+  type TournamentRow = { user_id: string; champion_points: number; runner_up_points: number; top_scorer_points: number; users: { name: string } | null }
+  const { data: tournamentPreds } = await supabase
+    .from('tournament_predictions')
+    .select('user_id, champion_points, runner_up_points, top_scorer_points, users(name)')
+
+  for (const pred of (tournamentPreds ?? []) as unknown as TournamentRow[]) {
+    const extra = (pred.champion_points ?? 0) + (pred.runner_up_points ?? 0) + (pred.top_scorer_points ?? 0)
+    if (extra > 0) {
+      if (!grouped[pred.user_id]) {
+        grouped[pred.user_id] = { name: pred.users?.name ?? 'Desconhecido', total: 0, correct: 0 }
+      }
+      grouped[pred.user_id].total += extra
+    }
+  }
+
   const ranking = Object.entries(grouped)
     .map(([user_id, v]) => ({ user_id, name: v.name, total_points: v.total, correct_results: v.correct }))
     .sort((a, b) => b.total_points - a.total_points)

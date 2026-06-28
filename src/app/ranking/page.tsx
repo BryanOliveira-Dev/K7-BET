@@ -9,8 +9,10 @@ export default function RankingPage() {
         <span className="font-bold text-slate-100 tracking-tight">
           K7 <span className="text-emerald-400">BET</span>
         </span>
-        <div className="flex gap-6 text-sm">
+        <div className="flex gap-4 text-sm">
           <a href="/jogos" className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Jogos</a>
+          <a href="/chaveamento" className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Chaveamento</a>
+          <a href="/torneio" className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Torneio</a>
           <a href="/ranking" className="text-slate-100 font-medium cursor-pointer">Ranking</a>
         </div>
       </nav>
