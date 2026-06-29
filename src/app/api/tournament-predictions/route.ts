@@ -8,13 +8,14 @@ export async function GET() {
 
   const supabase = createServerClient()
 
-  const [{ data: prediction }, { data: result }, { data: firstGame }] = await Promise.all([
+  const [{ data: prediction }, { data: result }, { data: firstScheduled }] = await Promise.all([
     supabase.from('tournament_predictions').select('*').eq('user_id', session.userId).maybeSingle(),
     supabase.from('tournament_results').select('*').order('set_at', { ascending: false }).limit(1).maybeSingle(),
-    supabase.from('games').select('kickoff_at').order('kickoff_at', { ascending: true }).limit(1).maybeSingle(),
+    supabase.from('games').select('kickoff_at').eq('status', 'scheduled').order('kickoff_at', { ascending: true }).limit(1).maybeSingle(),
   ])
 
-  const locked = firstGame ? new Date(firstGame.kickoff_at).getTime() <= Date.now() : false
+  // Aberto até o próximo jogo agendado começar; sem jogos agendados = encerrado
+  const locked = firstScheduled ? new Date(firstScheduled.kickoff_at).getTime() <= Date.now() : true
 
   return NextResponse.json({ prediction: prediction ?? null, result: result ?? null, locked })
 }
@@ -25,15 +26,16 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServerClient()
 
-  const { data: firstGame } = await supabase
+  const { data: firstScheduled } = await supabase
     .from('games')
     .select('kickoff_at')
+    .eq('status', 'scheduled')
     .order('kickoff_at', { ascending: true })
     .limit(1)
     .maybeSingle()
 
-  if (firstGame && new Date(firstGame.kickoff_at).getTime() <= Date.now()) {
-    return NextResponse.json({ error: 'Prazo encerrado — o torneio já começou' }, { status: 400 })
+  if (!firstScheduled || new Date(firstScheduled.kickoff_at).getTime() <= Date.now()) {
+    return NextResponse.json({ error: 'Prazo encerrado — palpites fechados' }, { status: 400 })
   }
 
   const { champion, runner_up, top_scorer } = await req.json()
