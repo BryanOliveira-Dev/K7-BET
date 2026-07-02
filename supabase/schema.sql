@@ -40,6 +40,7 @@ create table if not exists bets (
   predicted_result     text not null check (predicted_result in ('home','draw','away')),
   predicted_home_score int,
   predicted_away_score int,
+  tiebreaker_winner    text check (tiebreaker_winner in ('home','away')),
   points_earned        int not null default 0,
   created_at           timestamptz default now(),
   unique(user_id, game_id)

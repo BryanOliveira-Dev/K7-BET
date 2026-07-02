@@ -35,6 +35,7 @@ export interface Bet {
   predicted_result: BetResult
   predicted_home_score: number | null
   predicted_away_score: number | null
+  tiebreaker_winner: 'home' | 'away' | null
   points_earned: number
   created_at: string
 }
@@ -44,6 +45,7 @@ export interface OtherBet {
   predicted_result: BetResult
   predicted_home_score: number | null
   predicted_away_score: number | null
+  tiebreaker_winner: 'home' | 'away' | null
   points_earned: number
   users: { name: string } | null
 }

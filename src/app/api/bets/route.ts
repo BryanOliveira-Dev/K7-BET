@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
-  const { gameId, predicted_result, predicted_home_score, predicted_away_score } = await req.json()
+  const { gameId, predicted_result, predicted_home_score, predicted_away_score, tiebreaker_winner } = await req.json()
 
   if (!gameId || !predicted_result) {
     return NextResponse.json({ error: 'gameId e predicted_result são obrigatórios' }, { status: 400 })
@@ -23,6 +23,11 @@ export async function POST(req: NextRequest) {
     if (invalid) {
       return NextResponse.json({ error: 'O placar informado não condiz com o resultado escolhido.' }, { status: 400 })
     }
+  }
+
+  // tiebreaker_winner só é válido para empate em mata-mata
+  if (tiebreaker_winner && !['home', 'away'].includes(tiebreaker_winner)) {
+    return NextResponse.json({ error: 'tiebreaker_winner inválido.' }, { status: 400 })
   }
 
   const supabase = createServerClient()
@@ -48,6 +53,7 @@ export async function POST(req: NextRequest) {
       predicted_result,
       predicted_home_score: predicted_home_score ?? 0,
       predicted_away_score: predicted_away_score ?? 0,
+      tiebreaker_winner: predicted_result === 'draw' ? (tiebreaker_winner ?? null) : null,
     },
     { onConflict: 'user_id,game_id' }
   )

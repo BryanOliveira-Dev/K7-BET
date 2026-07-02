@@ -1,16 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import type { BetResult } from '@/lib/types'
+import type { BetResult, GamePhase } from '@/lib/types'
+
+const KNOCKOUT_PHASES: GamePhase[] = ['r16', 'qf', 'sf', 'final']
 
 interface Props {
   gameId: string
   homeTeam: string
   awayTeam: string
+  phase: GamePhase
   homeOdds: number | null
   awayOdds: number | null
   drawOdds: number | null
-  existingBet: { predicted_result: BetResult; predicted_home_score: number | null; predicted_away_score: number | null } | null
+  existingBet: {
+    predicted_result: BetResult
+    predicted_home_score: number | null
+    predicted_away_score: number | null
+    tiebreaker_winner: 'home' | 'away' | null
+  } | null
   onSuccess: () => void
 }
 
@@ -33,27 +41,37 @@ function adjustScoresForResult(result: BetResult, home: string, away: string): {
   return { home: String(h), away: String(a) }
 }
 
-export default function BetForm({ gameId, homeTeam, awayTeam, homeOdds, awayOdds, drawOdds, existingBet, onSuccess }: Props) {
+export default function BetForm({ gameId, homeTeam, awayTeam, phase, homeOdds, awayOdds, drawOdds, existingBet, onSuccess }: Props) {
   const [result, setResult] = useState<BetResult | ''>(existingBet?.predicted_result ?? '')
   const [homeScore, setHomeScore] = useState<string>(existingBet?.predicted_home_score?.toString() ?? '')
   const [awayScore, setAwayScore] = useState<string>(existingBet?.predicted_away_score?.toString() ?? '')
+  const [tiebreakerWinner, setTiebreakerWinner] = useState<'home' | 'away' | null>(existingBet?.tiebreaker_winner ?? null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  const isKnockout = KNOCKOUT_PHASES.includes(phase)
+  const showTiebreaker = result === 'draw' && isKnockout
 
   function handleSelectResult(value: BetResult) {
     setResult(value)
     const adjusted = adjustScoresForResult(value, homeScore, awayScore)
     setHomeScore(adjusted.home)
     setAwayScore(adjusted.away)
+    if (value !== 'draw') setTiebreakerWinner(null)
   }
 
   const scoreConflict = result !== '' && !scoreIsConsistent(result, homeScore, awayScore)
+  const tiebreakerRequired = showTiebreaker && !tiebreakerWinner
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!result) return
     if (scoreConflict) {
       setError('O placar não bate com o resultado escolhido.')
+      return
+    }
+    if (tiebreakerRequired) {
+      setError('Selecione quem passa nos pênaltis/prorrogação.')
       return
     }
     setSaving(true)
@@ -67,6 +85,7 @@ export default function BetForm({ gameId, homeTeam, awayTeam, homeOdds, awayOdds
         predicted_result: result,
         predicted_home_score: homeScore !== '' ? parseInt(homeScore) : 0,
         predicted_away_score: awayScore !== '' ? parseInt(awayScore) : 0,
+        tiebreaker_winner: showTiebreaker ? tiebreakerWinner : null,
       }),
     })
 
@@ -123,7 +142,7 @@ export default function BetForm({ gameId, homeTeam, awayTeam, homeOdds, awayOdds
               placeholder="0"
               className={`w-12 text-center bg-gray-800 border rounded px-1 py-1 text-white text-sm ${scoreConflict ? 'border-red-500' : 'border-gray-700'}`}
             />
-            <span className="text-gray-500 text-xs ml-1">(placar opcional)</span>
+            <span className="text-gray-500 text-xs ml-1">(placar no tempo normal)</span>
           </div>
           {scoreConflict && (
             <p className="text-red-400 text-xs">
@@ -135,11 +154,41 @@ export default function BetForm({ gameId, homeTeam, awayTeam, homeOdds, awayOdds
         </div>
       )}
 
+      {showTiebreaker && (
+        <div className="space-y-1.5">
+          <p className="text-xs text-amber-400 font-medium">Quem passa nos pênaltis/prorrogação?</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setTiebreakerWinner('home')}
+              className={`flex-1 rounded-lg py-2 px-2 text-xs font-medium border transition ${
+                tiebreakerWinner === 'home'
+                  ? 'bg-blue-500 text-white border-blue-500'
+                  : 'bg-gray-800 text-gray-300 border-gray-700 hover:border-gray-500'
+              }`}
+            >
+              {homeTeam}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTiebreakerWinner('away')}
+              className={`flex-1 rounded-lg py-2 px-2 text-xs font-medium border transition ${
+                tiebreakerWinner === 'away'
+                  ? 'bg-orange-500 text-white border-orange-500'
+                  : 'bg-gray-800 text-gray-300 border-gray-700 hover:border-gray-500'
+              }`}
+            >
+              {awayTeam}
+            </button>
+          </div>
+        </div>
+      )}
+
       {error && <p className="text-red-400 text-xs">{error}</p>}
 
       <button
         type="submit"
-        disabled={!result || saving || scoreConflict}
+        disabled={!result || saving || scoreConflict || tiebreakerRequired}
         className="w-full bg-green-600 text-white rounded-lg py-1.5 text-sm font-medium hover:bg-green-500 disabled:opacity-40 transition"
       >
         {saving ? 'Salvando...' : existingBet ? 'Atualizar palpite' : 'Confirmar palpite'}

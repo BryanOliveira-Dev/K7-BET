@@ -116,6 +116,11 @@ export default function GameCard({ game, otherBets, onBetSaved }: Props) {
               {game.my_bet.predicted_home_score != null && (
                 <span className="text-slate-500 ml-1 tabular-nums">· {game.my_bet.predicted_home_score}×{game.my_bet.predicted_away_score}</span>
               )}
+              {game.my_bet.tiebreaker_winner && (
+                <span className="text-amber-400 ml-1">
+                  · passa: {game.my_bet.tiebreaker_winner === 'home' ? game.home_team : game.away_team}
+                </span>
+              )}
             </span>
             {isFinished && (
               <span className={`font-bold tabular-nums ${game.my_bet.points_earned > 0 ? 'text-emerald-400' : 'text-slate-600'}`}>
@@ -139,6 +144,11 @@ export default function GameCard({ game, otherBets, onBetSaved }: Props) {
                   </span>
                   {bet.predicted_home_score != null && (
                     <span className="text-slate-600 tabular-nums">{bet.predicted_home_score}×{bet.predicted_away_score}</span>
+                  )}
+                  {bet.tiebreaker_winner && (
+                    <span className="text-amber-500 text-[10px]">
+                      {bet.tiebreaker_winner === 'home' ? game.home_team : game.away_team} passa
+                    </span>
                   )}
                   {isFinished && (
                     <span className={`font-bold tabular-nums ${bet.points_earned > 0 ? 'text-emerald-400' : 'text-slate-600'}`}>
@@ -165,6 +175,7 @@ export default function GameCard({ game, otherBets, onBetSaved }: Props) {
               gameId={game.id}
               homeTeam={game.home_team}
               awayTeam={game.away_team}
+              phase={game.phase}
               homeOdds={game.home_odds}
               awayOdds={game.away_odds}
               drawOdds={game.draw_odds}
