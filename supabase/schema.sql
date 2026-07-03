@@ -19,7 +19,7 @@ create table if not exists games (
   home_flag     text,
   away_flag     text,
   kickoff_at    timestamptz not null,
-  phase         text not null check (phase in ('group','r16','qf','sf','final')),
+  phase         text not null check (phase in ('group','r32','r16','qf','sf','final')),
   group_name    text,
   home_odds     numeric(4,2),
   away_odds     numeric(4,2),
