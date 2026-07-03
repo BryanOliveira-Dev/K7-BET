@@ -5,10 +5,11 @@ import GameCard from '@/components/GameCard'
 import type { Game, Bet, OtherBet } from '@/lib/types'
 
 type GameWithBet = Game & { my_bet: Bet | null; bets_open: boolean; other_bets: OtherBet[] }
-type Tab = 'proximos' | 'matamata' | 'encerrados'
+type Tab = 'matamata' | 'encerrados'
 
-const PHASE_ORDER = ['r32', 'r16', 'qf', 'sf', 'final']
+const PHASE_ORDER = ['group', 'r32', 'r16', 'qf', 'sf', 'final']
 const PHASE_LABELS_LONG: Record<string, string> = {
+  group: 'Fase de Grupos',
   r32: 'Rodada de 32',
   r16: 'Oitavas de Final',
   qf: 'Quartas de Final',
@@ -59,7 +60,7 @@ function groupByPhase(games: GameWithBet[]): { phase: string; label: string; gam
 export default function JogosPage() {
   const [games, setGames] = useState<GameWithBet[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<Tab>('proximos')
+  const [activeTab, setActiveTab] = useState<Tab>('matamata')
 
   const fetchGames = useCallback(async () => {
     const res = await fetch('/api/games')
@@ -73,16 +74,14 @@ export default function JogosPage() {
     return () => clearInterval(interval)
   }, [fetchGames])
 
-  const upcoming = games.filter(g => g.status !== 'finished' && g.phase === 'group')
+  const upcoming = games.filter(g => g.status !== 'finished')
   const finished = games.filter(g => g.status === 'finished').reverse()
-  const knockout = games.filter(g => g.phase !== 'group')
 
-  const upcomingByDay = groupByDay(upcoming)
+  const upcomingByPhase = groupByPhase(upcoming)
   const finishedByDay = groupByDay(finished)
-  const knockoutByPhase = groupByPhase(knockout)
 
   const finishedCount = finished.length
-  const knockoutCount = knockout.length
+  const upcomingCount = upcoming.length
 
   return (
     <main className="min-h-screen text-slate-100 relative" style={{backgroundImage: 'url(/bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed'}}>
@@ -104,16 +103,6 @@ export default function JogosPage() {
         <div className="sticky top-[53px] z-10 bg-slate-900/90 backdrop-blur border-b border-slate-800">
           <div className="max-w-2xl mx-auto px-4 flex gap-0">
             <button
-              onClick={() => setActiveTab('proximos')}
-              className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'proximos'
-                  ? 'border-emerald-400 text-emerald-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Grupos
-            </button>
-            <button
               onClick={() => setActiveTab('matamata')}
               className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
                 activeTab === 'matamata'
@@ -121,10 +110,10 @@ export default function JogosPage() {
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              Mata-Mata
-              {knockoutCount > 0 && (
+              Próximos
+              {upcomingCount > 0 && (
                 <span className="bg-slate-700 text-slate-300 text-xs px-1.5 py-0.5 rounded-full">
-                  {knockoutCount}
+                  {upcomingCount}
                 </span>
               )}
             </button>
@@ -149,28 +138,11 @@ export default function JogosPage() {
         <div className="max-w-2xl mx-auto px-4 py-8 w-full">
           {loading ? (
             <div className="text-slate-500 text-center py-16 text-sm">Carregando jogos...</div>
-          ) : activeTab === 'proximos' ? (
-            upcomingByDay.length === 0 ? (
-              <div className="text-slate-500 text-center py-16 text-sm">Nenhum jogo de grupos próximo.</div>
-            ) : (
-              upcomingByDay.map(({ dayKey, label, games: dayGames }) => (
-                <section key={dayKey} className="mb-10">
-                  <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 px-0.5 capitalize">
-                    {label}
-                  </h2>
-                  <div className="space-y-3">
-                    {dayGames.map(game => (
-                      <GameCard key={game.id} game={game} otherBets={game.other_bets ?? []} onBetSaved={fetchGames} />
-                    ))}
-                  </div>
-                </section>
-              ))
-            )
           ) : activeTab === 'matamata' ? (
-            knockoutByPhase.length === 0 ? (
-              <div className="text-slate-500 text-center py-16 text-sm">Nenhum jogo de mata-mata disponível ainda.</div>
+            upcomingByPhase.length === 0 ? (
+              <div className="text-slate-500 text-center py-16 text-sm">Nenhum jogo disponível.</div>
             ) : (
-              knockoutByPhase.map(({ phase, label, games: phaseGames }) => (
+              upcomingByPhase.map(({ phase, label, games: phaseGames }) => (
                 <section key={phase} className="mb-10">
                   <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 px-0.5">
                     {label}
