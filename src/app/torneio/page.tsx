@@ -5,8 +5,8 @@ import type { Game, Bet, OtherBet, TournamentPrediction, TournamentResult } from
 
 type GameWithBet = Game & { my_bet: Bet | null; bets_open: boolean; other_bets: OtherBet[] }
 
-const PHASES_ORDER = ['r16', 'qf', 'sf', 'final'] as const
-const PHASE_LABEL: Record<string, string> = { r16: 'Oitavas', qf: 'Quartas', sf: 'Semifinal', final: 'Final' }
+const PHASES_ORDER = ['r32', 'r16', 'qf', 'sf', 'final'] as const
+const PHASE_LABEL: Record<string, string> = { r32: 'Rodada 32', r16: 'Oitavas', qf: 'Quartas', sf: 'Semifinal', final: 'Final' }
 const SLOT = 80
 
 function getWinner(game: GameWithBet): 'home' | 'away' | null {

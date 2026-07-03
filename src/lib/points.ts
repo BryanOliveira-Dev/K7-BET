@@ -2,6 +2,7 @@ import type { BetResult, GamePhase } from './types'
 
 const PHASE_MULTIPLIER: Record<GamePhase, number> = {
   group: 1,
+  r32: 1,
   r16: 2,
   qf: 3,
   sf: 4,

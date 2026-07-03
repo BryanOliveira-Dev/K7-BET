@@ -1,4 +1,4 @@
-export type GamePhase = 'group' | 'r16' | 'qf' | 'sf' | 'final'
+export type GamePhase = 'group' | 'r32' | 'r16' | 'qf' | 'sf' | 'final'
 export type GameStatus = 'scheduled' | 'live' | 'finished'
 export type BetResult = 'home' | 'draw' | 'away'
 

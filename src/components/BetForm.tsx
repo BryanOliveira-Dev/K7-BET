@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { BetResult, GamePhase } from '@/lib/types'
 
-const KNOCKOUT_PHASES: GamePhase[] = ['r16', 'qf', 'sf', 'final']
+const KNOCKOUT_PHASES: GamePhase[] = ['r32', 'r16', 'qf', 'sf', 'final']
 
 interface Props {
   gameId: string

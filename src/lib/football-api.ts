@@ -41,9 +41,13 @@ export interface FinishedGameResult {
 
 const STAGE_MAP: Record<string, string> = {
   GROUP_STAGE: 'group',
+  ROUND_OF_32: 'r32',
+  LAST_32: 'r32',
   ROUND_OF_16: 'r16',
+  LAST_16: 'r16',
   QUARTER_FINALS: 'qf',
   SEMI_FINALS: 'sf',
+  THIRD_PLACE: 'sf',
   FINAL: 'final',
 }
 

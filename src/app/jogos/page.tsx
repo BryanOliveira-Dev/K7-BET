@@ -7,8 +7,9 @@ import type { Game, Bet, OtherBet } from '@/lib/types'
 type GameWithBet = Game & { my_bet: Bet | null; bets_open: boolean; other_bets: OtherBet[] }
 type Tab = 'proximos' | 'matamata' | 'encerrados'
 
-const PHASE_ORDER = ['r16', 'qf', 'sf', 'final']
+const PHASE_ORDER = ['r32', 'r16', 'qf', 'sf', 'final']
 const PHASE_LABELS_LONG: Record<string, string> = {
+  r32: 'Rodada de 32',
   r16: 'Oitavas de Final',
   qf: 'Quartas de Final',
   sf: 'Semifinais',
