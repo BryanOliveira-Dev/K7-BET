@@ -108,10 +108,12 @@ export default function TorneioPage() {
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-slate-100 text-sm">Seus Palpites</h3>
-                  {locked && (
+                  {locked ? (
                     <span className="text-xs text-amber-400 bg-amber-950/50 border border-amber-900/50 rounded-full px-2.5 py-1">
                       Prazo encerrado
                     </span>
+                  ) : (
+                    <span className="text-xs text-slate-500">até 04/07 às 15h</span>
                   )}
                 </div>
 

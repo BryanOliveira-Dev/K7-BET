@@ -97,6 +97,30 @@ function BracketSVGConn({ count, slotH, flipped = false }: { count: number; slot
   )
 }
 
+type BracketColumn = { phase: string; games: (GameWithBet | null)[] }
+
+// Monta as colunas do mata-mata da primeira fase disputada até a final, preenchendo
+// com vagas "A definir" as fases futuras cujos jogos ainda não foram cadastrados.
+function buildColumns(byPhase: Partial<Record<string, GameWithBet[]>>): BracketColumn[] {
+  const firstIdx = PHASES_ORDER.findIndex(p => (byPhase[p]?.length ?? 0) > 0)
+  if (firstIdx === -1) return []
+
+  const columns: BracketColumn[] = []
+  let prevCount: number | null = null
+
+  for (let i = firstIdx; i < PHASES_ORDER.length; i++) {
+    const phase = PHASES_ORDER[i]
+    const real = byPhase[phase]
+    const count: number = real?.length ? real.length : Math.max(1, Math.round((prevCount ?? 2) / 2))
+    const slots: (GameWithBet | null)[] = real ? [...real] : []
+    while (slots.length < count) slots.push(null)
+    columns.push({ phase, games: slots.slice(0, count) })
+    prevCount = count
+  }
+
+  return columns
+}
+
 function TwoSidedBracket({ games }: { games: GameWithBet[] }) {
   const knockout = games.filter(g => g.phase !== 'group')
   if (knockout.length === 0) {
@@ -116,23 +140,16 @@ function TwoSidedBracket({ games }: { games: GameWithBet[] }) {
     byPhase[p]!.sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime())
   }
 
-  const activePhases = (PHASES_ORDER as readonly string[]).filter(p => byPhase[p]?.length)
-  if (activePhases.length === 0) return null
+  const columns = buildColumns(byPhase)
+  if (columns.length === 0) return null
 
-  const finalPhase = activePhases[activePhases.length - 1]
-  const midPhases = activePhases.slice(0, -1)
-  const finalGames = byPhase[finalPhase]!
+  const finalCol = columns[columns.length - 1]
+  const midCols = columns.slice(0, -1)
 
   // Divide cada fase intermediária: esquerda = primeira metade, direita = segunda metade
-  const leftCols = midPhases.map(p => {
-    const all = byPhase[p]!
-    return { phase: p, games: all.slice(0, Math.ceil(all.length / 2)) }
-  })
+  const leftCols = midCols.map(c => ({ phase: c.phase, games: c.games.slice(0, Math.ceil(c.games.length / 2)) }))
   // Colunas da direita ordenadas de dentro para fora (mais próxima da final primeiro)
-  const rightCols = [...midPhases].reverse().map(p => {
-    const all = byPhase[p]!
-    return { phase: p, games: all.slice(Math.ceil(all.length / 2)) }
-  })
+  const rightCols = [...midCols].reverse().map(c => ({ phase: c.phase, games: c.games.slice(Math.ceil(c.games.length / 2)) }))
 
   const maxSide = leftCols.length > 0 ? Math.max(...leftCols.map(c => c.games.length)) : 1
   const totalH = Math.max(maxSide, 1) * SLOT
@@ -142,7 +159,7 @@ function TwoSidedBracket({ games }: { games: GameWithBet[] }) {
     <div className="overflow-x-auto pb-4">
       <div className="flex items-start" style={{ minWidth: 'max-content' }}>
 
-        {/* Lado esquerdo: mais externo → mais interno (oitavas → quartas → semi) */}
+        {/* Lado esquerdo: mais externo → mais interno */}
         {leftCols.map((col) => {
           const slotH = totalH / col.games.length
           return (
@@ -152,7 +169,7 @@ function TwoSidedBracket({ games }: { games: GameWithBet[] }) {
                   {PHASE_LABEL[col.phase]}
                 </div>
                 <div style={{ height: totalH }}>
-                  {col.games.map(g => <BracketMiniCard key={g.id} game={g} slotHeight={slotH} />)}
+                  {col.games.map((g, idx) => <BracketMiniCard key={g?.id ?? `${col.phase}-L-${idx}`} game={g} slotHeight={slotH} />)}
                 </div>
               </div>
               <div className="flex flex-col shrink-0">
@@ -169,11 +186,11 @@ function TwoSidedBracket({ games }: { games: GameWithBet[] }) {
             Final
           </div>
           <div style={{ height: totalH }} className="flex items-center">
-            <BracketMiniCard game={finalGames[0] ?? null} slotHeight={totalH} />
+            <BracketMiniCard game={finalCol.games[0] ?? null} slotHeight={totalH} />
           </div>
         </div>
 
-        {/* Lado direito: mais interno → mais externo (semi → quartas → oitavas), cada um com conector espelhado antes */}
+        {/* Lado direito: mais interno → mais externo, cada um com conector espelhado antes */}
         {rightCols.map((col) => {
           const slotH = totalH / Math.max(col.games.length, 1)
           return (
@@ -187,7 +204,7 @@ function TwoSidedBracket({ games }: { games: GameWithBet[] }) {
                   {PHASE_LABEL[col.phase]}
                 </div>
                 <div style={{ height: totalH }}>
-                  {col.games.map(g => <BracketMiniCard key={g.id} game={g} slotHeight={slotH} />)}
+                  {col.games.map((g, idx) => <BracketMiniCard key={g?.id ?? `${col.phase}-R-${idx}`} game={g} slotHeight={slotH} />)}
                 </div>
               </div>
             </div>
