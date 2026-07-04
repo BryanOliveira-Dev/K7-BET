@@ -6,14 +6,8 @@ import type { Game, Bet, OtherBet } from '@/lib/types'
 type GameWithBet = Game & { my_bet: Bet | null; bets_open: boolean; other_bets: OtherBet[] }
 
 const PHASES_ORDER = ['r32', 'r16', 'qf', 'sf', 'final'] as const
-const PHASE_LABEL: Record<string, string> = {
-  r32: 'Rodada 32',
-  r16: 'Oitavas',
-  qf: 'Quartas',
-  sf: 'Semifinal',
-  final: 'Final',
-}
-const BASE_SLOT = 88 // altura do slot em px para a fase com mais jogos
+const PHASE_LABEL: Record<string, string> = { r32: 'Rodada 32', r16: 'Oitavas', qf: 'Quartas', sf: 'Semifinal', final: 'Final' }
+const SLOT = 80
 
 function getWinner(game: GameWithBet): 'home' | 'away' | null {
   if (game.status !== 'finished') return null
@@ -22,102 +16,186 @@ function getWinner(game: GameWithBet): 'home' | 'away' | null {
   return null
 }
 
-function TeamRow({
-  flag, name, score, isWinner, showScore,
-}: {
-  flag: string | null; name: string; score: number | null; isWinner: boolean; showScore: boolean
-}) {
-  return (
-    <div className={`flex items-center gap-1.5 px-2.5 py-2 ${isWinner ? 'bg-slate-800/70' : ''}`}>
-      {flag
-        ? <img src={flag} alt="" className="w-5 h-5 object-contain shrink-0" />
-        : <div className="w-5 h-5 shrink-0 bg-slate-800 rounded-sm" />
-      }
-      <span className={`text-xs font-medium truncate flex-1 ${isWinner ? 'text-slate-100' : 'text-slate-400'}`}>
-        {name}
-      </span>
-      {showScore && (
-        <span className={`text-xs font-bold tabular-nums ml-1 ${isWinner ? 'text-emerald-400' : 'text-slate-600'}`}>
-          {score ?? 0}
-        </span>
-      )}
-    </div>
-  )
-}
-
-function BracketCard({ game, slotHeight }: { game: GameWithBet | null; slotHeight: number }) {
+function BracketMiniCard({ game, slotHeight }: { game: GameWithBet | null; slotHeight: number }) {
   const winner = game ? getWinner(game) : null
   const isFinished = game?.status === 'finished'
   const isChampion = game?.phase === 'final' && isFinished
-
   return (
     <div className="flex items-center justify-center px-1" style={{ height: slotHeight }}>
-      <div className={`w-44 bg-slate-900 rounded-xl overflow-hidden shrink-0 ${isChampion ? 'border border-amber-500/60 shadow-lg shadow-amber-500/10' : 'border border-slate-800'}`}>
+      <div className={`w-36 bg-slate-900 rounded-xl overflow-hidden shrink-0 ${isChampion ? 'border border-amber-500/60 shadow-lg shadow-amber-500/10' : 'border border-slate-800'}`}>
         {game ? (
           <>
-            <TeamRow
-              flag={game.home_flag}
-              name={game.home_team}
-              score={game.home_score}
-              isWinner={winner === 'home'}
-              showScore={isFinished}
-            />
+            <div className={`flex items-center gap-1.5 px-2 py-1.5 ${winner === 'home' ? 'bg-slate-800/70' : ''}`}>
+              {game.home_flag
+                ? <img src={game.home_flag} alt="" className="w-4 h-4 object-contain shrink-0" />
+                : <div className="w-4 h-4 shrink-0 bg-slate-800 rounded-sm" />}
+              <span className={`text-[11px] font-medium truncate flex-1 ${winner === 'home' ? 'text-slate-100' : 'text-slate-400'}`}>
+                {game.home_team}
+              </span>
+              {isFinished && (
+                <span className={`text-[11px] font-bold tabular-nums ${winner === 'home' ? 'text-emerald-400' : 'text-slate-600'}`}>
+                  {game.home_score ?? 0}
+                </span>
+              )}
+            </div>
             <div className="border-t border-slate-800" />
-            <TeamRow
-              flag={game.away_flag}
-              name={game.away_team}
-              score={game.away_score}
-              isWinner={winner === 'away'}
-              showScore={isFinished}
-            />
+            <div className={`flex items-center gap-1.5 px-2 py-1.5 ${winner === 'away' ? 'bg-slate-800/70' : ''}`}>
+              {game.away_flag
+                ? <img src={game.away_flag} alt="" className="w-4 h-4 object-contain shrink-0" />
+                : <div className="w-4 h-4 shrink-0 bg-slate-800 rounded-sm" />}
+              <span className={`text-[11px] font-medium truncate flex-1 ${winner === 'away' ? 'text-slate-100' : 'text-slate-400'}`}>
+                {game.away_team}
+              </span>
+              {isFinished && (
+                <span className={`text-[11px] font-bold tabular-nums ${winner === 'away' ? 'text-emerald-400' : 'text-slate-600'}`}>
+                  {game.away_score ?? 0}
+                </span>
+              )}
+            </div>
             {!isFinished && (
-              <div className="text-xs text-slate-700 text-center py-1.5 border-t border-slate-800">
-                {new Date(game.kickoff_at).toLocaleDateString('pt-BR', {
-                  day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo',
-                })}
-                {' '}
-                {new Date(game.kickoff_at).toLocaleTimeString('pt-BR', {
-                  hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo',
-                })}
+              <div className="text-[10px] text-slate-700 text-center py-1 border-t border-slate-800">
+                {new Date(game.kickoff_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' })}
               </div>
             )}
             {isChampion && winner && (
-              <div className="text-xs text-amber-400 text-center py-1.5 border-t border-amber-900/40 font-semibold">
-                Campeão
-              </div>
+              <div className="text-[10px] text-amber-400 text-center py-1 border-t border-amber-900/40 font-semibold">Campeão</div>
             )}
           </>
         ) : (
-          <div className="py-5 text-center text-slate-700 text-xs">A definir</div>
+          <div className="py-4 text-center text-slate-700 text-[10px]">A definir</div>
         )}
       </div>
     </div>
   )
 }
 
-function BracketConnector({ gameCount, slotHeight }: { gameCount: number; slotHeight: number }) {
-  const totalHeight = gameCount * slotHeight
-  const pairs = Math.floor(gameCount / 2)
-
+function BracketSVGConn({ count, slotH, flipped = false }: { count: number; slotH: number; flipped?: boolean }) {
+  const totalH = count * slotH
+  const pairs = Math.floor(count / 2)
   return (
     <svg
       width="20"
-      height={totalHeight}
-      className="shrink-0 mt-8"
-      style={{ overflow: 'visible' }}
+      height={totalH}
+      style={{ display: 'block', overflow: 'visible', transform: flipped ? 'scaleX(-1)' : undefined }}
     >
-      {Array.from({ length: pairs }).map((_, i) => {
-        const topY = i * 2 * slotHeight + slotHeight / 2
-        const bottomY = (i * 2 + 1) * slotHeight + slotHeight / 2
-        const midY = (topY + bottomY) / 2
-        return (
-          <g key={i}>
-            <line x1="0" y1={topY} x2="0" y2={bottomY} stroke="#334155" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="0" y1={midY} x2="20" y2={midY} stroke="#334155" strokeWidth="1.5" strokeLinecap="round" />
-          </g>
-        )
-      })}
+      {count === 1 ? (
+        <line x1="0" y1={slotH / 2} x2="20" y2={slotH / 2} stroke="#334155" strokeWidth="1.5" strokeLinecap="round" />
+      ) : (
+        Array.from({ length: pairs }).map((_, i) => {
+          const topY = i * 2 * slotH + slotH / 2
+          const botY = (i * 2 + 1) * slotH + slotH / 2
+          const midY = (topY + botY) / 2
+          return (
+            <g key={i}>
+              <line x1="0" y1={topY} x2="0" y2={botY} stroke="#334155" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="0" y1={midY} x2="20" y2={midY} stroke="#334155" strokeWidth="1.5" strokeLinecap="round" />
+            </g>
+          )
+        })
+      )}
     </svg>
+  )
+}
+
+function TwoSidedBracket({ games }: { games: GameWithBet[] }) {
+  const knockout = games.filter(g => g.phase !== 'group')
+  if (knockout.length === 0) {
+    return (
+      <div className="text-slate-500 text-sm text-center py-16">
+        Chaveamento disponível após a fase de grupos.
+      </div>
+    )
+  }
+
+  const byPhase: Partial<Record<string, GameWithBet[]>> = {}
+  for (const g of knockout) {
+    if (!byPhase[g.phase]) byPhase[g.phase] = []
+    byPhase[g.phase]!.push(g)
+  }
+  for (const p in byPhase) {
+    byPhase[p]!.sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime())
+  }
+
+  const activePhases = (PHASES_ORDER as readonly string[]).filter(p => byPhase[p]?.length)
+  if (activePhases.length === 0) return null
+
+  const finalPhase = activePhases[activePhases.length - 1]
+  const midPhases = activePhases.slice(0, -1)
+  const finalGames = byPhase[finalPhase]!
+
+  // Divide cada fase intermediária: esquerda = primeira metade, direita = segunda metade
+  const leftCols = midPhases.map(p => {
+    const all = byPhase[p]!
+    return { phase: p, games: all.slice(0, Math.ceil(all.length / 2)) }
+  })
+  // Colunas da direita ordenadas de dentro para fora (mais próxima da final primeiro)
+  const rightCols = [...midPhases].reverse().map(p => {
+    const all = byPhase[p]!
+    return { phase: p, games: all.slice(Math.ceil(all.length / 2)) }
+  })
+
+  const maxSide = leftCols.length > 0 ? Math.max(...leftCols.map(c => c.games.length)) : 1
+  const totalH = Math.max(maxSide, 1) * SLOT
+  const HDR = 28
+
+  return (
+    <div className="overflow-x-auto pb-4">
+      <div className="flex items-start" style={{ minWidth: 'max-content' }}>
+
+        {/* Lado esquerdo: mais externo → mais interno (oitavas → quartas → semi) */}
+        {leftCols.map((col) => {
+          const slotH = totalH / col.games.length
+          return (
+            <div key={col.phase + 'L'} className="flex items-start shrink-0">
+              <div className="flex flex-col shrink-0">
+                <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest px-1 flex items-center" style={{ height: HDR }}>
+                  {PHASE_LABEL[col.phase]}
+                </div>
+                <div style={{ height: totalH }}>
+                  {col.games.map(g => <BracketMiniCard key={g.id} game={g} slotHeight={slotH} />)}
+                </div>
+              </div>
+              <div className="flex flex-col shrink-0">
+                <div style={{ height: HDR }} />
+                <BracketSVGConn count={col.games.length} slotH={slotH} />
+              </div>
+            </div>
+          )
+        })}
+
+        {/* Final (centro) */}
+        <div className="flex flex-col shrink-0">
+          <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest px-1 flex items-center" style={{ height: HDR }}>
+            Final
+          </div>
+          <div style={{ height: totalH }} className="flex items-center">
+            <BracketMiniCard game={finalGames[0] ?? null} slotHeight={totalH} />
+          </div>
+        </div>
+
+        {/* Lado direito: mais interno → mais externo (semi → quartas → oitavas), cada um com conector espelhado antes */}
+        {rightCols.map((col) => {
+          const slotH = totalH / Math.max(col.games.length, 1)
+          return (
+            <div key={col.phase + 'R'} className="flex items-start shrink-0">
+              <div className="flex flex-col shrink-0">
+                <div style={{ height: HDR }} />
+                <BracketSVGConn count={Math.max(col.games.length, 1)} slotH={slotH} flipped />
+              </div>
+              <div className="flex flex-col shrink-0">
+                <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest px-1 flex items-center" style={{ height: HDR }}>
+                  {PHASE_LABEL[col.phase]}
+                </div>
+                <div style={{ height: totalH }}>
+                  {col.games.map(g => <BracketMiniCard key={g.id} game={g} slotHeight={slotH} />)}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+
+      </div>
+    </div>
   )
 }
 
@@ -131,25 +209,6 @@ export default function ChaveamentoPage() {
       .then(data => { setGames(data); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
-
-  const knockoutGames = games.filter(g => g.phase !== 'group')
-
-  const byPhase: Record<string, GameWithBet[]> = {}
-  for (const game of knockoutGames) {
-    if (!byPhase[game.phase]) byPhase[game.phase] = []
-    byPhase[game.phase].push(game)
-  }
-  for (const phase in byPhase) {
-    byPhase[phase].sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime())
-  }
-
-  const activePhases = PHASES_ORDER.filter(p => byPhase[p]?.length > 0)
-  const maxGames = activePhases.length > 0
-    ? Math.max(...activePhases.map(p => byPhase[p].length))
-    : 1
-
-  const totalHeight = maxGames * BASE_SLOT
-  const HEADER_H = 32
 
   return (
     <main
@@ -172,50 +231,13 @@ export default function ChaveamentoPage() {
         </nav>
 
         <div className="px-4 py-8 w-full">
-          <h1 className="text-lg font-bold text-slate-100 tracking-tight mb-6">Chaveamento</h1>
+          <h1 className="text-lg font-bold text-slate-100 tracking-tight mb-1">Chaveamento</h1>
+          <p className="text-xs text-slate-500 mb-6">Acompanhe o caminho das seleções até a grande final.</p>
 
           {loading ? (
             <div className="text-slate-500 text-center py-16 text-sm">Carregando...</div>
-          ) : activePhases.length === 0 ? (
-            <div className="text-slate-500 text-center py-16 text-sm">
-              Nenhum jogo de mata-mata disponível ainda.
-            </div>
           ) : (
-            <div className="overflow-x-auto pb-6">
-              <div className="flex items-start" style={{ height: totalHeight + HEADER_H, minWidth: 'max-content' }}>
-
-                {activePhases.map((phase, phaseIndex) => {
-                  const phaseGames = byPhase[phase]
-                  const slotHeight = totalHeight / phaseGames.length
-                  const hasNext = phaseIndex < activePhases.length - 1
-
-                  return (
-                    <div key={phase} className="flex items-start shrink-0">
-                      {/* Phase column */}
-                      <div className="flex flex-col shrink-0">
-                        <div
-                          className="text-xs font-semibold text-slate-500 uppercase tracking-widest px-2 flex items-center"
-                          style={{ height: HEADER_H }}
-                        >
-                          {PHASE_LABEL[phase]}
-                        </div>
-                        <div style={{ height: totalHeight }}>
-                          {phaseGames.map(game => (
-                            <BracketCard key={game.id} game={game} slotHeight={slotHeight} />
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Connector to next phase */}
-                      {hasNext && (
-                        <BracketConnector gameCount={phaseGames.length} slotHeight={slotHeight} />
-                      )}
-                    </div>
-                  )
-                })}
-
-              </div>
-            </div>
+            <TwoSidedBracket games={games} />
           )}
         </div>
       </div>
